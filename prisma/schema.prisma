@@ -7,17 +7,29 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  CLIENT
+  BARBER
+  ADMIN
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String?
   email         String    @unique
   emailVerified DateTime?
   image         String?
-  accounts      Account[]
-  sessions      Session[]
-  bookings      Booking[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  role          Role      @default(CLIENT)
+
+  accounts Account[]
+  sessions Session[]
+
+  bookings Booking[] @relation("UserBookings")
+
+  barber Barber?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Account {
@@ -45,50 +57,110 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-model VerificationToken {
-  identifier String
-  token      String
-  expires    DateTime
-
-  @@id([identifier, token])
-}
-
 model Barbershop {
-  id          String              @id @default(uuid())
+  id          String   @id @default(uuid())
   name        String
   address     String
   phones      String[]
   description String
   imageUrl    String
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
-  services    BarbershopService[]
+
+  services BarbershopService[]
+  barbers  Barber[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model BarbershopService {
-  id           String     @id @default(uuid())
-  name         String
-  description  String
-  imageUrl     String
-  price        Decimal    @db.Decimal(10, 2)
+  id          String  @id @default(uuid())
+  name        String
+  description String
+  imageUrl    String
+  price       Decimal @db.Decimal(10, 2)
+
   barbershopId String
   barbershop   Barbershop @relation(fields: [barbershopId], references: [id])
-  bookings     Booking[]
+
+  bookings Booking[]
+
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  BarberService BarberService[]
+}
+
+model Barber {
+  id String @id @default(uuid())
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+
+  barbershopId String
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id])
+
+  specialty  String?
+  experience Int?
+  active     Boolean @default(true)
+
+  bookings Booking[]
+
+  schedules BarberSchedule[]
+  services  BarberService[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Booking {
-  id        String            @id @default(uuid())
-  userId    String
-  user      User              @relation(fields: [userId], references: [id])
+  id String @id @default(uuid())
+
+  userId String
+  user   User   @relation("UserBookings", fields: [userId], references: [id])
+
+  barberId String?
+  barber   Barber? @relation(fields: [barberId], references: [id])
+
   serviceId String
   service   BarbershopService @relation(fields: [serviceId], references: [id])
-  date      DateTime
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
+
+  date DateTime
+
+  status String @default("PENDING")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BarberSchedule {
+  id String @id @default(uuid())
+
+  barberId String
+  barber   Barber @relation(fields: [barberId], references: [id])
+
+  weekday   Int
+  startTime String
+  endTime   String
+
+  createdAt DateTime @default(now())
+}
+
+model BarberService {
+  id String @id @default(uuid())
+
+  barberId String
+  barber   Barber @relation(fields: [barberId], references: [id])
+
+  serviceId String
+  service   BarbershopService @relation(fields: [serviceId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([barberId, serviceId])
 }
