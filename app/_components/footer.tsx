@@ -7,7 +7,7 @@ const Footer = () => {
         <Card className="mx-5 w-full max-w-6xl">
           <CardContent className="py-6">
             <p className="w-full text-center text-sm text-gray-400">
-              © 2026 Copyright <span className="font-bold">Movo Barber</span>
+              © 2026 Copyright <span className="font-bold">barbershoop</span>
             </p>
           </CardContent>
         </Card>
