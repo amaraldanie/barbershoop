@@ -1,4 +1,4 @@
-import { PrismaAdapter } from "@auth/prisma-adapter"
+import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import { AuthOptions } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 import { db } from "./prisma"
@@ -14,7 +14,7 @@ export const authOptions: AuthOptions = {
   ],
 
   session: {
-    strategy: "jwt", // 🔥 importante pra role funcionar bem
+    strategy: "jwt",
   },
 
   callbacks: {
@@ -23,6 +23,7 @@ export const authOptions: AuthOptions = {
         token.id = user.id
         token.role = (user as any).role
       }
+
       return token
     },
 
